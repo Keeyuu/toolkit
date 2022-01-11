@@ -87,10 +87,6 @@ func (u *AssemblyIterator) BuildNewAssemblyIterator(next Iterator) *AssemblyIter
 	item := &AssemblyIterator{
 		IteratorA: u,
 		IteratorB: next,
-		valueA:    nil,
-		valueB:    nil,
-		statusA:   true,
-		statusB:   true,
 		isInit:    true,
 	}
 	item.valueA, item.statusA = item.IteratorA.Next()
