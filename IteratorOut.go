@@ -1,32 +1,16 @@
-package main
-
-import "fmt"
-
-func main() {
-	arrStr := IteratorOut{assemblyItem{Value: "a"}, assemblyItem{Value: "b"}, assemblyItem{Value: "c"}, assemblyItem{Value: "d"}}
-	arrInt := IteratorOut{assemblyItem{Value: "1"}, assemblyItem{Value: "2"}, assemblyItem{Value: "3"}}
-	arrChar := IteratorOut{assemblyItem{Value: "一"}, assemblyItem{Value: "二"}, assemblyItem{Value: "三"}}
-	iter := NewSliceIterator(arrStr).ToAssemblyIterator().BuildNewAssemblyIterator(NewSliceIterator(arrInt)).BuildNewAssemblyIterator(NewSliceIterator(arrChar))
-	for {
-		if value, ok := iter.Next(); ok {
-			fmt.Println(value)
-		} else {
-			break
-		}
-	}
-}
-
-type IteratorOut []assemblyItem //唯一需要变的就是这里，出了泛型就不用变了
+package IteratorOut
 
 type assemblyItem struct {
-	Value  string
-	Type   string
-	Anyhow interface{}
+	Value string
+	Type  string
 }
+
+type IteratorSingleOut assemblyItem //唯一需要变的就是这里，出了泛型就不用变了
+
+type IteratorOut []IteratorSingleOut
 
 type SliceIterator struct {
 	origin IteratorOut
-	len    int
 	index  int
 }
 
@@ -34,12 +18,11 @@ func NewSliceIterator(origin IteratorOut) *SliceIterator {
 	return &SliceIterator{
 		origin: origin,
 		index:  0,
-		len:    len(origin),
 	}
 }
 
 func (n *SliceIterator) Next() (IteratorOut, bool) {
-	if n.index < n.len {
+	if n.index < len(n.origin) {
 		n.index++
 		return IteratorOut{n.origin[n.index-1]}, true
 	}
@@ -105,28 +88,32 @@ func (u *AssemblyIterator) Next() (IteratorOut, bool) {
 		}
 		return append(u.valueA, u.valueB...), true
 	} else {
-		for {
-			var tmp IteratorOut
-			if u.statusB {
-				if tmp, u.statusB = u.IteratorB.Next(); u.statusB {
-					u.valueB = tmp
-					return append(u.valueA, u.valueB...), true
-				}
+		return u.doNext()
+	}
+}
+
+func (u *AssemblyIterator) doNext() (IteratorOut, bool) {
+	for {
+		var tmp IteratorOut
+		if u.statusB {
+			if tmp, u.statusB = u.IteratorB.Next(); u.statusB {
+				u.valueB = tmp
+				return append(u.valueA, u.valueB...), true
 			}
-			if u.IteratorB != nil {
-				u.IteratorB.Reset()
-				u.statusB = true
-			}
-			if u.statusA {
-				if tmp, u.statusA = u.IteratorA.Next(); u.statusA {
-					u.valueA = tmp
-					if u.IteratorB != nil {
-						continue
-					}
-					return append(u.valueA, u.valueB...), true
-				}
-			}
-			return nil, false
 		}
+		if u.IteratorB != nil {
+			u.IteratorB.Reset()
+			u.statusB = true
+		}
+		if u.statusA {
+			if tmp, u.statusA = u.IteratorA.Next(); u.statusA {
+				u.valueA = tmp
+				if u.IteratorB != nil {
+					continue
+				}
+				return append(u.valueA, u.valueB...), true
+			}
+		}
+		return nil, false
 	}
 }
