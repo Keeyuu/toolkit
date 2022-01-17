@@ -1,4 +1,4 @@
-package IteratorOut
+package tool
 
 type assemblyItem struct {
 	Value string

@@ -1,4 +1,4 @@
-package IteratorOut
+package tool
 
 import (
 	"fmt"
