@@ -4,7 +4,6 @@ type assemblyItem struct {
 	Value string
 	Type  string
 }
-
 type IteratorSingleOut assemblyItem //唯一需要变的就是这里，出了泛型就不用变了
 
 type IteratorOut []IteratorSingleOut
