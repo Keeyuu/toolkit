@@ -5,7 +5,7 @@ void convert(char* str)
 {
     int i = 3;
     cout << "\n" << "/" << str[0] << "/";
-    while (true)
+    while (i < MAX)
     {
         if (str[i] == '\0') { cout << endl; return; };
         if (str[i] == '\\') cout << '/'; else cout << str[i];
