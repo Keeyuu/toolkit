@@ -3,7 +3,6 @@ package tool
 import (
 	"sync"
 )
-
 type GPool struct {
 	queue chan int
 	wg    *sync.WaitGroup
