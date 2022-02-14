@@ -16,4 +16,5 @@ int main()
     }
     FreeLibrary(hDll);
     cout << "end debug" << endl;
+    system("pause");
 }
