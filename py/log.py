@@ -20,7 +20,7 @@ class Loggers:
         self.logger.setLevel(logging.DEBUG)
         # 输出渠道一 - 文件形式
         self.fileLogger = handlers.RotatingFileHandler(
-            "./log/py.log", maxBytes=16*1024*1024, backupCount=3)
+            "log.log", maxBytes=16*1024*1024, backupCount=3)
 
         # 输出渠道二 - 控制台
         self.console = logging.StreamHandler()
