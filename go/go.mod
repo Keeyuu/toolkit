@@ -1,4 +1,4 @@
-module test
+module github.com/keeYuc/MyTool/go
 
 go 1.17
 
