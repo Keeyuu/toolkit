@@ -8,10 +8,12 @@ type Concurrent struct {
 	maxGoroutine int
 }
 
-func NewConcurrent(maxGoroutine int) *Concurrent {
+func NewConcurrent(maxGoroutine int) *Concurrent { return NewConcurrentMultiple(maxGoroutine, 1) }
+
+func NewConcurrentMultiple(maxGoroutine, multiple int) *Concurrent {
 	return (&Concurrent{
 		taskChannel:  make(chan ConcurrentFunc, maxGoroutine),
-		downChannel:  make(chan struct{}, maxGoroutine),
+		downChannel:  make(chan struct{}, maxGoroutine*multiple),
 		maxGoroutine: maxGoroutine,
 	}).run()
 }
