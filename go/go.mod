@@ -1,4 +1,4 @@
-module github.com/keeYuc/MyTool/go
+module github.com/keeYuc/tool-kit/go
 
 go 1.17
 
