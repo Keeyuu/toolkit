@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	TryTimes       = 100 //
-	ExpireInterval = 1   //s
-	SleepInterval  = 10  //ms
+	TryTimes       = 100  //
+	ExpireInterval = 1000 //ms
+	SleepInterval  = 10   //ms
 )
 
 type redisHand interface {
@@ -19,16 +19,38 @@ type redisHand interface {
 	Put(string, string, time.Duration, chan error) bool
 }
 
+type config struct {
+	tryTimes       int
+	expireInterval int
+	sleepInterval  int
+}
+
+func newConfig() config {
+	return config{
+		tryTimes:       TryTimes,
+		expireInterval: ExpireInterval,
+		sleepInterval:  SleepInterval,
+	}
+}
+
 type Lock struct {
 	channel   chan error
 	id        string
 	uuid      string
 	redisHand redisHand
+	config    config
 }
 
 func NewLock(id string, redisHand redisHand) *Lock {
-	l := &Lock{channel: make(chan error, 2), id: id, uuid: uuid.NewV4().String(), redisHand: redisHand}
+	l := &Lock{channel: make(chan error, 2), id: id, uuid: uuid.NewV4().String(), redisHand: redisHand, config: newConfig()}
 	return l
+}
+
+//default TryTimes       = 100 ExpireInterval = 1000   //ms SleepInterval  = 10  //ms
+func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) {
+	l.config.tryTimes = tryTimes
+	l.config.expireInterval = expireInterva
+	l.config.sleepInterval = sleepInterval
 }
 
 func (l *Lock) GetErrChan() chan error {
@@ -52,7 +74,7 @@ func (l *Lock) getKey() string {
 }
 
 func (l *Lock) tryLock(times int) {
-	if times >= TryTimes {
+	if times >= l.config.tryTimes {
 		l.channel <- fmt.Errorf("TryLock over times please check")
 		return
 	} else {
@@ -61,12 +83,12 @@ func (l *Lock) tryLock(times int) {
 	if cache_id, ok := l.redisHand.Get(l.getKey(), l.channel); !ok {
 		return
 	} else if cache_id == l.uuid || cache_id == "" {
-		if ok := l.redisHand.Put(l.getKey(), l.uuid, time.Duration(ExpireInterval)*time.Second, l.channel); !ok {
+		if ok := l.redisHand.Put(l.getKey(), l.uuid, time.Duration(l.config.expireInterval)*time.Millisecond, l.channel); !ok {
 			return
 		}
 		l.channel <- nil
 	} else {
-		time.Sleep(time.Duration(SleepInterval) * time.Millisecond) //* chock wait next trylock
+		time.Sleep(time.Duration(l.config.sleepInterval) * time.Millisecond) //* chock wait next trylock
 		l.tryLock(times)
 	}
 }
