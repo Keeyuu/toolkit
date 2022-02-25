@@ -2,7 +2,6 @@ package tool
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -13,6 +12,7 @@ const (
 	ExpireInterval = 1000 //ms
 	SleepInterval  = 10   //ms
 	overTimesErr   = "TryLock over times please check"
+	contextDone    = "ctx has done"
 )
 
 type redisHand interface {
@@ -44,8 +44,10 @@ type Lock struct {
 }
 
 type OverTimesErr struct{}
+type ContextDonw struct{}
 
 func (o *OverTimesErr) Error() string { return overTimesErr }
+func (o *ContextDonw) Error() string  { return contextDone }
 
 func NewLock(id string, redisHand redisHand) *Lock {
 	l := &Lock{channel: make(chan error, 2), id: id, uuid: uuid.NewV4().String(), redisHand: redisHand, config: newConfig()}
@@ -60,23 +62,23 @@ func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) *Lock {
 	return l
 }
 
-func (l *Lock) Result(ctx context.Context) error {
+func (l *Lock) Result(ctx context.Context) (bool, error) {
 	return l.result(ctx, false)
 }
 
-func (l *Lock) ResultIgnore(ctx context.Context) error {
+func (l *Lock) ResultIgnore(ctx context.Context) (bool, error) {
 	return l.result(ctx, true)
 }
 
-func (l *Lock) result(ctx context.Context, ignore bool) error {
+func (l *Lock) result(ctx context.Context, ignore bool) (bool, error) {
 	select {
 	case err := <-l.channel:
 		if ignore && err != nil && err.Error() == overTimesErr {
-			return nil
+			return false, nil
 		}
-		return err
+		return err == nil, err
 	case <-ctx.Done():
-		return fmt.Errorf("ctx has done")
+		return false, new(ContextDonw)
 	}
 }
 
