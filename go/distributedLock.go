@@ -84,20 +84,23 @@ func (l *Lock) GetErrChan() chan error {
 	return l.channel
 }
 
-func (l *Lock) WaitLock() {
+func (l *Lock) WaitLock() *Lock {
 	l.lock(0, true)
+	return l
 }
 
-func (l *Lock) TryLock() {
+func (l *Lock) TryLock() *Lock {
 	l.lock(l.config.tryTimes-1, false)
+	return l
 }
 
-func (l *Lock) ReleaseLock() {
+func (l *Lock) ReleaseLock() *Lock {
 	if cache_id, ok := l.redisHand.Get(l.getKey(), l.channel); ok && (cache_id == l.uuid || cache_id != "") {
 		if ok := l.redisHand.Delete(l.getKey(), l.channel); ok {
 			l.channel <- nil
 		}
 	}
+	return l
 }
 
 func (l *Lock) getKey() string {
