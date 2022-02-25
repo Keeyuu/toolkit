@@ -12,6 +12,7 @@ const (
 	TryTimes       = 100  //
 	ExpireInterval = 1000 //ms
 	SleepInterval  = 10   //ms
+	overTimesErr   = "TryLock over times please check"
 )
 
 type redisHand interface {
@@ -42,6 +43,10 @@ type Lock struct {
 	config    config
 }
 
+type OverTimesErr struct{}
+
+func (o *OverTimesErr) Error() string { return overTimesErr }
+
 func NewLock(id string, redisHand redisHand) *Lock {
 	l := &Lock{channel: make(chan error, 2), id: id, uuid: uuid.NewV4().String(), redisHand: redisHand, config: newConfig()}
 	return l
@@ -56,8 +61,19 @@ func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) *Lock {
 }
 
 func (l *Lock) Result(ctx context.Context) error {
+	return l.result(ctx, false)
+}
+
+func (l *Lock) ResultIgnore(ctx context.Context) error {
+	return l.result(ctx, true)
+}
+
+func (l *Lock) result(ctx context.Context, ignore bool) error {
 	select {
 	case err := <-l.channel:
+		if ignore && err != nil && err.Error() == overTimesErr {
+			return nil
+		}
 		return err
 	case <-ctx.Done():
 		return fmt.Errorf("ctx has done")
@@ -90,7 +106,7 @@ func (l *Lock) getKey() string {
 
 func (l *Lock) lock(times int, wait bool) {
 	if times >= l.config.tryTimes {
-		l.channel <- fmt.Errorf("TryLock over times please check")
+		l.channel <- new(OverTimesErr)
 		return
 	} else {
 		times++
