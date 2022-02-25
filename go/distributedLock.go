@@ -1,6 +1,7 @@
 package tool
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -47,11 +48,20 @@ func NewLock(id string, redisHand redisHand) *Lock {
 }
 
 //default TryTimes       = 100 ExpireInterval = 1000   //ms SleepInterval  = 10  //ms
-func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) *Lock{
+func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) *Lock {
 	l.config.tryTimes = tryTimes
 	l.config.expireInterval = expireInterva
 	l.config.sleepInterval = sleepInterval
 	return l
+}
+
+func (l *Lock) Result(ctx context.Context) error {
+	select {
+	case err := <-l.channel:
+		return err
+	case <-ctx.Done():
+		return fmt.Errorf("ctx has done")
+	}
 }
 
 func (l *Lock) GetErrChan() chan error {
