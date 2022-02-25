@@ -62,6 +62,17 @@ func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) *Lock {
 	return l
 }
 
+func (l *Lock) ReExpire() {
+	if cache_id, ok := l.redisHand.Get(l.getKey(), l.channel); !ok {
+		return
+	} else if cache_id == l.uuid || cache_id == "" {
+		if ok := l.redisHand.Set(l.getKey(), l.uuid, time.Duration(l.config.expireInterval)*time.Millisecond, l.channel); !ok {
+			return
+		}
+		l.channel <- nil
+	}
+}
+
 func (l *Lock) Result(ctx context.Context) (bool, error) {
 	return l.result(ctx, false)
 }
