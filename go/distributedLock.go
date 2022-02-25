@@ -16,7 +16,7 @@ const (
 type redisHand interface {
 	Get(string, chan error) (string, bool)
 	Delete(string, chan error) bool
-	Put(string, string, time.Duration, chan error) bool
+	Set(string, string, time.Duration, chan error) bool
 }
 
 type config struct {
@@ -83,7 +83,7 @@ func (l *Lock) tryLock(times int) {
 	if cache_id, ok := l.redisHand.Get(l.getKey(), l.channel); !ok {
 		return
 	} else if cache_id == l.uuid || cache_id == "" {
-		if ok := l.redisHand.Put(l.getKey(), l.uuid, time.Duration(l.config.expireInterval)*time.Millisecond, l.channel); !ok {
+		if ok := l.redisHand.Set(l.getKey(), l.uuid, time.Duration(l.config.expireInterval)*time.Millisecond, l.channel); !ok {
 			return
 		}
 		l.channel <- nil
