@@ -47,10 +47,11 @@ func NewLock(id string, redisHand redisHand) *Lock {
 }
 
 //default TryTimes       = 100 ExpireInterval = 1000   //ms SleepInterval  = 10  //ms
-func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) {
+func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) *Lock{
 	l.config.tryTimes = tryTimes
 	l.config.expireInterval = expireInterva
 	l.config.sleepInterval = sleepInterval
+	return l
 }
 
 func (l *Lock) GetErrChan() chan error {
