@@ -58,7 +58,11 @@ func (l *Lock) GetErrChan() chan error {
 }
 
 func (l *Lock) WaitLock() {
-	l.tryLock(0)
+	l.lock(0, true)
+}
+
+func (l *Lock) TryLock() {
+	l.lock(l.config.tryTimes-1, false)
 }
 
 func (l *Lock) ReleaseLock() {
@@ -73,7 +77,7 @@ func (l *Lock) getKey() string {
 	return "Lock:" + l.id
 }
 
-func (l *Lock) tryLock(times int) {
+func (l *Lock) lock(times int, wait bool) {
 	if times >= l.config.tryTimes {
 		l.channel <- fmt.Errorf("TryLock over times please check")
 		return
@@ -88,7 +92,9 @@ func (l *Lock) tryLock(times int) {
 		}
 		l.channel <- nil
 	} else {
-		time.Sleep(time.Duration(l.config.sleepInterval) * time.Millisecond) //* chock wait next trylock
-		l.tryLock(times)
+		if wait {
+			time.Sleep(time.Duration(l.config.sleepInterval) * time.Millisecond) //* chock wait next trylock
+		}
+		l.lock(times, wait)
 	}
 }
