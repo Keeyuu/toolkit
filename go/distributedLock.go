@@ -54,7 +54,7 @@ func NewLock(id string, redisHand redisHand) *Lock {
 	return l
 }
 
-//default TryTimes       = 100 ExpireInterval = 1000   //ms SleepInterval  = 10  //ms
+// default TryTimes       = 100 ExpireInterval = 1000   //ms SleepInterval  = 10  //ms
 func (l *Lock) SetConfig(tryTimes, expireInterva, sleepInterval int) *Lock {
 	l.config.tryTimes = tryTimes
 	l.config.expireInterval = expireInterva
